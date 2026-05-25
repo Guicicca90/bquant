@@ -2,7 +2,7 @@
 
 # bquant
 
-**Quantitative analysis toolkit for Brazilian financial and economic data.**
+**Quantitative analysis toolkit for Brazilian financial, economic, and urban data.**
 
 ![Python](https://img.shields.io/badge/Python-0d1117?style=for-the-badge&logo=python&logoColor=58a6ff)
 ![pandas](https://img.shields.io/badge/pandas-0d1117?style=for-the-badge&logo=pandas&logoColor=58a6ff)
@@ -13,30 +13,56 @@
 
 ---
 
-Built as personal research infrastructure for Brazilian asset markets and urban economics — from exploratory notebooks to reusable pipelines.
+Personal research infrastructure for Brazilian asset markets and urban economics — built incrementally while studying time series theory, geodata, and financial econometrics to support real projects in production.
 
 ---
 
-## Modules
+## `econ/` — Macroeconomic & Time Series
 
-### `econ/` — Macroeconomic & Financial Markets
-- **`timeseries_eda.py`** — stationarity testing (ADF, KPSS), ACF/PACF, ARIMA modeling, volatility analysis (ARCH-LM)
-- **`economia_pipeline.py`** — macro indicators pipeline: Selic, IPCA, IGPM, FIPEZAP, IGMI-R
-- **`mercados.py`** — B3 and CVM data ingestion, asset return analysis, portfolio statistics
-- **`fipezap.py`** — real estate price index time series for Brazilian markets
-- **`econ_utils.py`** — shared utilities for normalization, date handling, and series transformation
+### Time series analysis (`timeseries_eda.py`)
 
-### `geo/` — Geodata & Urban Intelligence
-- **`iptu_sp.py`** — São Paulo IPTU public records ingestion and feature engineering
-- **`rais_geo.py`** — RAIS labor market data aggregated by municipality
-- **`idh_udh.py`** — HDI and urban development index by census unit
-- **`indicadores_munic.py`** — composite socioeconomic indicators by municipality (IPEA, ONU)
-- **`estabmun.py`** — business establishment density and sector composition per municipality
-- **`pipeline_geo.py`** — full enrichment pipeline: joins socioeconomic + spatial layers
-- **`ceps.py`**, **`delegacias.py`**, **`popmun.py`** — address, public safety, and population data by area
+Built around a key insight from studying rolling window statistics:
 
-### `notebooks/` — Research & Exploration
-- S&P 500 asset analysis and return attribution
+> A time series with **constant variance** over rolling windows supports the stationarity hypothesis — unit root closer to zero, as tested by Augmented Dickey-Fuller. A series with **increasing variance** indicates error accumulation over time, a hallmark of non-stationarity.
+
+The scatterplot of a non-stationary series shows a visible pattern (error structure with trend); a stationary series looks like a near-random walk — constant variance, no accumulation.
+
+**Implemented methods:**
+- Stationarity tests: ADF (Augmented Dickey-Fuller), KPSS
+- ACF (Autocorrelation Function) — measures linear correlation between a series at time *t* and its value at *t-k*, **including influence of all intermediate lags**
+- PACF (Partial Autocorrelation) — isolates the direct relationship between *t* and *t-k*, controlling for intermediate lags
+- ARIMA order selection from ACF/PACF patterns
+- ARCH-LM volatility test (heteroskedasticity in residuals)
+- Rolling mean/std visualization for structural break detection
+
+### Macro indicators pipeline (`economia_pipeline.py`, `fipezap.py`)
+- Selic, IPCA, IGPM, IBC-BR — scraped monthly from BCB, FGV, IBGE
+- FipeZAP index: price/m² by city, type, rooms — with fallback chain for missing combinations
+- IGMI-R real estate profitability index by state capital
+
+### Financial markets (`mercados.py`)
+- B3 and CVM data ingestion — asset prices, return series, portfolio statistics
+- S&P 500 return attribution (notebooks)
+
+---
+
+## `geo/` — Geodata & Urban Intelligence
+
+`GeoPipeline` — a full enrichment pipeline that joins and normalizes data from 8+ sources into parquet files consumed by [urban-space](https://github.com/Guicicca90/urban-space) and [solo-inteligente](https://github.com/Guicicca90/solo-inteligente).
+
+| Module | What it processes |
+|--------|------------------|
+| `iptu_sp.py` | São Paulo IPTU — 11M+ parcels, fiscal value, lot area, zoning |
+| `rais_geo.py` | RAIS labor market — employment, wages, sector composition by municipality |
+| `idh_udh.py` | HDI and Urban Development Index by census unit (sub-municipal) |
+| `indicadores_munic.py` | IPEA + ONU composite socioeconomic indicators by municipality |
+| `estabmun.py` | Business establishment density and sector composition |
+| `pipeline_geo.py` | Orchestrates all sources → normalized parquet files via `cKDTree` spatial joins |
+| `ceps.py` | CEP geocoding and proximity assignment to UDH units |
+| `delegacias.py` | Public safety data — police district boundaries and occurrence rates |
+| `popmun.py` | Population, area, and density by municipality |
+
+Spatial joins use `scipy.spatial.cKDTree` for fast nearest-neighbor matching between point datasets (CEPs, properties) and polygon centroids (UDH, districts).
 
 ---
 
@@ -44,12 +70,14 @@ Built as personal research infrastructure for Brazilian asset markets and urban 
 
 | Source | Module | Used for |
 |--------|--------|----------|
-| GeoSampa (PMSP) | `geo/` | Zoning, IPTU, land use |
-| IPEA | `geo/` | Socioeconomic indicators |
+| GeoSampa (PMSP) | `geo/` | IPTU, zoning, land use |
+| IPEA | `geo/` | Socioeconomic development indices |
 | RAIS (MTE) | `geo/` | Labor market by municipality |
-| BCB / FipeZAP | `econ/` | Real estate and interest rate indices |
-| B3 / CVM | `econ/` | Asset prices and financial market data |
+| ONU / UDH | `geo/` | Sub-municipal HDI |
+| BCB | `econ/` | Selic, IGMI-R, IVG-R |
+| FIPE / FipeZAP | `econ/` | Real estate price index |
+| B3 / CVM | `econ/` | Asset prices |
 
 ---
 
-*The `geo/` module feeds directly into [urban-space](https://github.com/Guicicca90/urban-space) — property pricing and terrain scouting.*
+*Feeds directly into [urban-space](https://github.com/Guicicca90/urban-space) and [solo-inteligente](https://github.com/Guicicca90/solo-inteligente).*
