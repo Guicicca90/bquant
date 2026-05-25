@@ -52,4 +52,4 @@ Built as personal research infrastructure for Brazilian asset markets and urban 
 
 ---
 
-*The `geo/` module feeds directly into [urban-space](https://github.com/MaxPower90/urban-space) — property pricing and terrain scouting.*
+*The `geo/` module feeds directly into [urban-space](https://github.com/Guicicca90/urban-space) — property pricing and terrain scouting.*
